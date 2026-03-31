@@ -83,12 +83,13 @@ taxon <-
   distinct(taxon_id, .keep_all = TRUE) |>
   mutate(
     # RECORD-LEVEL
-    language = "my_language", # e.g. "en"
+    language = "en",
     license = "my_license", # e.g. "http://creativecommons.org/publicdomain/zero/1.0/"
-    rightsHolder = "my_rights_holder", # e.g. "INBO"
-    datasetID = "my_dataset_doi", # e.g. "https://doi.org/10.15468/xvuzfh"
-    institutionCode = "my_institution_code", # e.g. "INBO"
-    datasetName = "my_dataset_title", # e.g. "Checklist of non-native freshwater fishes in Flanders, Belgium"
+    rightsHolder = "MARE",
+    datasetID = "my_dataset_doi",
+    institutionCode = "MARE",
+    datasetName = "Checklist of introduced marine species in Portugal ",
+    
     # TAXON-LEVEL
     taxonID = taxon_id,
     scientificName = scientific_name,
