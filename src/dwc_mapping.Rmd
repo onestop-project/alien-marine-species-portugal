@@ -40,7 +40,7 @@ library(digest)         # To generate hashes
 library(rgbif)          # To use GBIF services
 ```
 
-# Read source dat
+# Read source data
 
 Create a data frame `raw`_data` from the source data:
 
@@ -48,6 +48,11 @@ The data is maintained in [this Google Spreadsheet](https://docs.google.com/spre
 
 ```{r read_source_data}
 raw_data <- read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQQaI2UraS4oMPlHD_gyZjoLh2q4x4uEmNzZCPJNJIArg6AyuM4DPldT4ZwWGz88cZOsFxf9je_rDhA/pub?gid=1172557183&single=true&output=csv")
+```
+Copy the source data to the repository to keep track of changes:
+
+```{r}
+write_csv(raw_data, here("data", "raw", "alien_marine_species_portugal_copy.csv"), na = "")
 ```
 
 # Preprocessing
