@@ -46,18 +46,9 @@ Create a data frame `raw`_data` from the source data:
 
 The data is maintained in [this Google Spreadsheet](https://docs.google.com/spreadsheets/d/1TBv5iPiPnSUSu36J0K6HxHu3pYs2A1rL/edit?gid=1283124273#gid=1283124273).
 
-Read the relevant worksheet (published as csv):
-
-```{r}
-raw_data <- read_csv(here("data", "raw", "checklist.csv"), show_col_types = FALSE) 
-```
-
-Read the relevant worksheet (published as csv):
-
 ```{r read_source_data}
-raw_data <- read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vRRIxk5niVwK1R5uTkGVuWBa6vlTOX0tVA5oD12cT3MFWjdXBVvpodNa7WfRSeo93lBKHUQ4oA7_dM9/pub?gid=1172557183&single=true&output=csv"))
+raw_data <- read_csv("https://docs.google.com/spreadsheets/d/e/2PACX-1vQQaI2UraS4oMPlHD_gyZjoLh2q4x4uEmNzZCPJNJIArg6AyuM4DPldT4ZwWGz88cZOsFxf9je_rDhA/pub?gid=1172557183&single=true&output=csv")
 ```
-
 
 # Preprocessing
 
@@ -70,101 +61,6 @@ input_data <-
   raw_data |>
   remove_empty("rows") |>
   clean_names() 
-```
-
-## Check scientific names
-
-Match the scientific names from your checklist against the GBIF Backbone Taxonomy, with the optional classification provided.
-
-Column name | Description
--- | --
-verbatim_scientific_name | The original scientific name as provided in the raw data file
-scientificName | The matching scientific name from the GBIF backbone
-rank  | The taxonomic rank of scientificName
-status | The taxonomic status of scientificName (e.g. "ACCEPTED", "SYNONYM", "DOUBTFUL")
-acceptedUsageKey | The GBIF backbone taxonKey/usageKey/nubkey of the accepted name (if scientificName is a synonym)
-acceptedScientificName | The accepted name (if scientificName is a synonym)
-matchType | The type of match (e.g. "EXACT", "FUZZY", "HIGHERRANK", "NOMATCH")
-confidence | The confidence score of the match
-
-```{r}
-input_data |>
-  dplyr::mutate(
-    scientificName = scientific_name,
-    rank = taxon_rank
-  ) |>
-  name_backbone_checklist() |>
-  dplyr::select(
-    verbatim_scientific_name, scientificName, rank, status, acceptedUsageKey,
-    acceptedScientificName, matchType, confidence
-  )
-```
-
-Make sure to check the results of the name matching carefully, and correct any errors in the raw data file.
-
-Once you upload your checklist to an Integrated Publishing Toolkit (IPT) and register it with GBIF, the system will automatically link the scientific names in your raw data file to the GBIF backbone taxonomy. 
-The linking is based on the raw scientific name including authorship, the taxon rank and the provided taxonomy (eg kingdom). While GBIF keeps your raw data accessible on the published page, names that don't find a match in the GBIF Backbone won’t have active links to taxon web pages. To ensure your checklist is fully integrated and easy to navigate, your names should match as closely as possible with the GBIF Backbone.
-
-Also consider to use the accepted taxon names instead of synonyms. GBIF automatically links synonyms with their accepted counterparts, but it’s best practice to use accepted taxon names directly in your checklist. It keeps things clean and prevents any unnecessary confusion for the users.
-
-After you have made corrections, run all code again from the beginning.
-
-## Generate taxon IDs
-
-To link taxa with information in the extension(s), each taxon needs a unique and stable `taxonID`. Here we create one in the form of `dataset_shortname:taxon:hash`, where `hash` is unique code based on scientific name and kingdom. However, the `hash` will only remain the same as long as scientific name and kingdom remain the same. As soon as one character is changed, a new hash will be generated. Therefore, we strongly recommend to create the hash once for each taxon, and add it to the raw data file in the column `taxon_id_hash`. This way, the hash will remain stable even if scientific names change or are corrected in the future.
-
-You can also provide your own id's, but make sure that if a taxon has multiple records, it has the same id in all records.
-
-```{r}
-vdigest <- Vectorize(digest) # Vectorize digest function to work with vectors
-taxon_id_hashes <- 
-    input_data |>
-  mutate(
-    # Only create a hash if taxon_id_hash is missing
-    taxon_id_hash = if_else(
-      is.na(taxon_id_hash),
-      vdigest(paste(scientific_name, kingdom), algo = "md5"),
-      taxon_id_hash
-      )
-  ) |>
-  select(taxon_id_hash, scientific_name)
-
-taxon_id_hashes
-```
-
-After you have filled in the `taxon_id_hash` column in the raw data file, run all code again from the beginning.
-
-In the next code chunks, we remove the rows with missing `taxon_id_hash` values:
-
-```{r}
-(removed_rows <-
-  input_data |>
-  filter(is.na(taxon_id_hash)))
-
-input_data <-
-  input_data |>
-  filter(!is.na(taxon_id_hash))
-```
-
-```{r}
-cat(paste0(
-  "Number of rows with missing `taxon_id_hash`: ", nrow(removed_rows),
-  "\nNumbers of rows remaining in the checklist: ", nrow(input_data)
-))
-```
-
-Next, we create the `taxon_id` column based on the `taxon_id_hash` column:
-
-```{r}
-input_data <-
-  input_data |>
-  mutate(
-    taxon_id = paste(
-      "my_dataset_shortname", # e.g. "alien-fishes-checklist"
-      "taxon",
-      taxon_id_hash,
-      sep = ":"
-    ))
 ```
 
 # Darwin Core mapping
